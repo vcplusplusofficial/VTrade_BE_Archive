@@ -1,8 +1,9 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = ''
+SECRET_KEY = os.environ.get('VTRADE_SECRET_KEY')
 
 DEBUG = True
 
@@ -53,11 +54,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db-postgresql-nyc3-49863',
-        'USER': 'doadmin',
-        'PASSWORD': '',
-        'HOST': 'db-postgresql-nyc3-49863-do-user-16116037-0.c.db.ondigitalocean.com',
-        'PORT': '25060'
+        'NAME': os.environ.get('VTRADE_DATABASE_NAME'),
+        'USER': os.environ.get('VTRADE_DATABASE_USER'),
+        'PASSWORD': os.environ.get('VTRADE_DATABASE_PASSWORD'),
+        'HOST': os.environ.get('VTRADE_DATABASE_HOST'),
+        'PORT': os.environ.get('VTRADE_DATABASE_PORT')
     }
 }
 
