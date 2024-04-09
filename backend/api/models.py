@@ -116,7 +116,7 @@ class Transaction(models.Model):
         User, on_delete=models.CASCADE, related_name="seller_transactions"
     )
     time_posted = models.DateTimeField(auto_now_add=True)
-    time_sold = models.DateTimeField()
+    time_sold = models.DateTimeField(auto_now_add=True)
 
 
 class MyBids(models.Model):
