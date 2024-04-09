@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from . import listing
 
-
+# View for listing operations
 @api_view(['GET', 'POST'])
 def listing_operations(request):
     if request.method == 'GET':
@@ -32,26 +32,31 @@ def listing_operations(request):
         # For POST, use request.data
         response = listing.post_listing(request.data)
         # Ensure response is serialized properly
-        return Response(response)
+        return Response(response, status=status.HTTP_201_CREATED)
 
     else:
         return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+# View for modifying a listing
 @api_view(['DELETE', 'PUT'])
 def modify_listing(request, listing_id):
     if request.method == 'DELETE':
         # Handle DELETE request to remove a listing
-        pass
+        pass  # Implement logic here if needed
 
     elif request.method == 'PUT':
-        user_input = request.GET.get("user_input", "").split("+")
-        if not user_input:
-            return Response({"error": "Input parameter is missing"}, status=status.HTTP_400_BAD_REQUEST)
+        input_data = request.data
+        if not input_data:
+            return Response({"error": "Input data is missing"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if user_input[0].pop(0):
-            response = listing.buy_product(user_input)
+        is_buy_request = input_data.pop(0)  # Assuming the first item determines if it's a buy request
+        if is_buy_request:
+            response = listing.buy_product(input_data)
         else:
-            response = listing.update_listing(user_input)
+            response = listing.update_listing(input_data)
 
         return Response(response)
+
+    else:
+        return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
