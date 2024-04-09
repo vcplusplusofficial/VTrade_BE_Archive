@@ -1,43 +1,73 @@
-from models import Transaction
+from rest_framework import status
+from django.db import IntegrityError, DatabaseError
+from django.core.exceptions import ValidationError
+from .serializers import TransactionSerializer
+from .models import Transaction
 from django.http import JsonResponse
 
+
 def add_transaction(transaction_data):
-    price, listing_id, buyer_id, seller_id= transaction_data
-    
-    new_transaction = Transaction(
-        price=price,
-        listing_id=listing_id,
-        buyer_id=buyer_id,
-        seller_id=seller_id
-    )
-    
-    instance = Transaction.create(new_user)
-    
-    return JsonResponse({"message": "Transaction created successfully"})
+    try:
+        price, listing_id, buyer_id, seller_id = transaction_data
 
-def update_transaction(transaction_data):
-    transaction = get_transaction(transaction_data)
-    
-    for field, value in transaction_data.items():
-        if hasattr(transaction, field):
-            setattr(transaction, field, value)
-            
-    transaction.save()
-    
-    return JsonResponse({"message": "Transaction updated successfully"})
+        new_transaction = Transaction.objects.create(
+            price=price,
+            listing_id=listing_id,
+            buyer_id=buyer_id,
+            seller_id=seller_id
+        )
 
-def remove_transaction(transaction_data):
-    transaction = get_transaction(transaction_data)
-    
-    transaction.delete()
-    
-    return JsonResponse({"message": "Transaction removed successfully"})
-    
-def get_transaction(transaction_data):
-    transaction_id = transaction_data.get("id")
-    
-    try: 
+        serializer = TransactionSerializer(new_transaction)
+        return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+    except ValidationError as e:
+        return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except IntegrityError:
+        return JsonResponse({"error": "Integrity error, possibly duplicate data."}, status=status.HTTP_400_BAD_REQUEST)
+    except DatabaseError:
+        return JsonResponse({"error": "Database error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        # Log the exception for debugging
+        print(e)
+        return JsonResponse({"error": "Unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def update_transaction(transaction_id, transaction_data):
+    try:
         transaction = Transaction.objects.get(pk=transaction_id)
-        return transaction
+        for field, value in transaction_data.items():
+            if hasattr(transaction, field):
+                setattr(transaction, field, value)
+        transaction.save()
+        return JsonResponse({"message": "Transaction updated successfully"})
     except Transaction.DoesNotExist:
-        return JsonResponse({"error": "Transaction not found"}, status=404)
+        return JsonResponse({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        # Log the exception for debugging
+        print(e)
+        return JsonResponse({"error": "Unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def remove_transaction(transaction_id):
+    try:
+        transaction = Transaction.objects.get(pk=transaction_id)
+        transaction.delete()
+        return JsonResponse({"message": "Transaction removed successfully"}, status=status.HTTP_204_NO_CONTENT)
+    except Transaction.DoesNotExist:
+        return JsonResponse({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        # Log the exception for debugging
+        print(e)
+        return JsonResponse({"error": "Unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def get_transaction(transaction_id):
+    try:
+        transaction = Transaction.objects.get(pk=transaction_id)
+        serializer = TransactionSerializer(transaction)
+        return JsonResponse(serializer.data)
+    except Transaction.DoesNotExist:
+        return JsonResponse({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        # Log the exception for debugging
+        print(e)
+        return JsonResponse({"error": "Unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
