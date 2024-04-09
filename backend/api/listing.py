@@ -12,8 +12,7 @@ from rest_framework import status
 # used to create a new listing
 def post_listing(user_input):
     try:
-        user_id, listing_type, title, location, description, form, price, \
-            status, payment_method, category, condition = user_input
+        user_id, listing_type, title, location, description, form, price, status, payment_method, category, condition = user_input
 
         # Create a new Listing object
         new_listing = Listing.objects.create(
@@ -34,17 +33,17 @@ def post_listing(user_input):
         return JsonResponse({'listing': serializer.data})
     except ValidationError as e:
         # Handle validation errors, e.g., missing fields or incorrect data types
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except IntegrityError:
         # Handle errors related to the integrity of the database,
         # like unique constraint violations
-        return JsonResponse({"error": "Integrity error, possibly duplicate data."}, status=400)
+        return JsonResponse({"error": "Integrity error, possibly duplicate data."}, status=status.HTTP_400_BAD_REQUEST)
     except DatabaseError:
         # Handle general database errors
-        return JsonResponse({"error": "Database error."}, status=500)
+        return JsonResponse({"error": "Database error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         # Catch-all for any other exceptions, should be logged for debugging.
-        return JsonResponse({"error": "Unexpected error occurred."}, status=500)
+        return JsonResponse({"error": "Unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # used in category page, when filtering with price
@@ -52,22 +51,13 @@ def filter_price(user_input):
     if not user_input:
         return Listing.objects.all()  # Return all items if no price specified
 
-    if len(user_input) > 1:
-        try:
-            min_price, max_price = map(float, user_input)
-        except ValueError:
-            return JsonResponse({"error": "Invalid price range format"}, status=400)
+    try:
+        price = float(user_input[0])
+    except ValueError:
+        return JsonResponse({"error": "Invalid price format"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Filter items within the price range
-        filter_item = Listing.objects.filter(price__lt=max_price, price__gt=min_price)
-    else:
-        try:
-            price = float(user_input[0])
-        except ValueError:
-            return JsonResponse({"error": "Invalid price format"}, status=400)
-
-        # Filter items with price less than the specified price
-        filter_item = Listing.objects.filter(price__lt=price)
+    # Filter items with price less than the specified price
+    filter_item = Listing.objects.filter(price__lt=price)
 
     return filter_item
 
@@ -78,7 +68,7 @@ def get_items(user_input):
     try:
         listing = Listing.objects.get(category=category)
     except Listing.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
+        return JsonResponse({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
 
     return listing
 
@@ -127,7 +117,7 @@ def get_product_info(user_input):
     try:
         listing = Listing.objects.get(id=id)
     except Listing.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
+        return JsonResponse({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
     track_clicks(listing)
     return listing
 
@@ -145,9 +135,10 @@ def buy_product(user_input):
     try:
         listing = Listing.objects.get(id=id)
     except Listing.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
+        return JsonResponse({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
     listing.status = False
     listing.save()
 
     return listing
+

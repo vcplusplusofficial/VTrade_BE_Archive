@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 from . import listing
 
 
@@ -8,7 +9,7 @@ def listing_operations(request):
     if request.method == 'GET':
         user_input = request.GET.get("user_input", "").split("+")
         if not user_input:
-            return Response({"error": "Input parameter is missing"}, status=400)
+            return Response({"error": "Input parameter is missing"}, status=status.HTTP_400_BAD_REQUEST)
 
         operations = {
             'filter_price': listing.filter_price,
@@ -21,7 +22,7 @@ def listing_operations(request):
 
         operation = user_input.pop(0)
         if operation not in operations:
-            return Response({"error": "Invalid operation"}, status=400)
+            return Response({"error": "Invalid operation"}, status=status.HTTP_400_BAD_REQUEST)
 
         response = operations[operation](user_input)
         # Ensure response is serialized properly
@@ -34,7 +35,7 @@ def listing_operations(request):
         return Response(response)
 
     else:
-        return Response({"error": "Method not allowed"}, status=405)
+        return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['DELETE', 'PUT'])
@@ -46,7 +47,7 @@ def modify_listing(request, listing_id):
     elif request.method == 'PUT':
         user_input = request.GET.get("user_input", "").split("+")
         if not user_input:
-            return Response({"error": "Input parameter is missing"}, status=400)
+            return Response({"error": "Input parameter is missing"}, status=status.HTTP_400_BAD_REQUEST)
 
         if user_input[0].pop(0):
             response = listing.buy_product(user_input)

@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .view import listing_operations, modify_listing
+from .views import listing_operations, modify_listing
 from django.contrib import admin
 
 
