@@ -1,16 +1,15 @@
 from django.db import models
 import uuid
 from datetime import datetime
-from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 
 
 class User(models.Model):
-    username = models.CharField(editable=False)
-    first_name = models.CharField(editable=False)
-    last_name = models.CharField(editable=False)
+    username = models.CharField(max_length=150, editable=False)
+    first_name = models.CharField(max_length=30, editable=False)
+    last_name = models.CharField(max_length=100, editable=False)
     password = models.UUIDField(editable=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(_("Email address"), unique=True, null=False)
@@ -70,17 +69,18 @@ class Listing(models.Model):
     )
     status = models.IntegerField(choices=STATUS_CHOICES, default=STATUS_PENDING)
     payment_method = models.CharField(max_length=255)
-    create_date = models.DateTimeField(_("Created at"), auto_now_add=True)
-    update_date = models.DateTimeField(_("Updated at"), auto_now=True)
     category = models.CharField(_("Category"), max_length=255, blank=False, null=False)
     condition = models.CharField(
         _("Condition"), max_length=255, blank=False, null=False
     )
+    create_date = models.DateTimeField(_("Created at"), auto_now_add=True)
+    update_date = models.DateTimeField(_("Updated at"), auto_now=True)
     clicked = models.IntegerField(
         _("Number of interaction"),
         validators=[MinValueValidator(0)],
         blank=True,
         null=False,
+        default=0
     )
 
     def __str__(self):
